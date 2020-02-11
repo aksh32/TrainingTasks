@@ -32,10 +32,17 @@ for key, value in csv_final_data.items():
     # redis_conn.set(key, value)
     # redis_conn.incr(value+"_count")
     redis_conn.hset(hash_set_name, key, value)
-    redis_conn.hincrby(hash_set_name, 1)
+    redis_conn.hincrby(hash_set_name, hash(key), 1)
 
-pprint.pprint(redis_conn.hgetall(hash_set_name))
+# pprint.pprint(redis_conn.hgetall(hash_set_name))
 # print('\n------------state and country data------------\n')
+op_data = [key for key in redis_conn.hscan_iter(hash_set_name) if key]
+pprint.pprint(op_data)
+
+with open('./OutputData/redis_csv_data.csv', 'w+') as csv_output:
+    wtr = csv.writer(csv_output, delimiter=',', dialect='excel')
+    wtr.writerows(op_data)
+
 
 # with open('./OutputData/redis_data.txt', 'a+') as outputfile:
 #     for key in redis_conn.scan_iter():
@@ -52,9 +59,3 @@ pprint.pprint(redis_conn.hgetall(hash_set_name))
 #         # print('{country: '+count_key+', count: '+redis_conn.get(count_key).decode('utf-8')+'}')
 #         countOpFile.write('{country: '+count_key+', count: '+redis_conn.get(count_key).decode('utf-8')+'}\n')
 # print("country and count data inserted successfully!!!!!!!!!!")
-
-for count_key in redis_conn.scan_iter(match=''):
-        count_key = count_key.decode('utf-8')
-        # print('{country: '+count_key+', count: '+redis_conn.get(count_key).decode('utf-8')+'}')
-        countOpFile.write('{country: '+count_key+', count: '+redis_conn.get(count_key).decode('utf-8')+'}\n')
-
