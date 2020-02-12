@@ -4,7 +4,6 @@ import socket
 import time
 import sys
 import traceback
-from pprint import pprint
 import threading
 import redis
 
@@ -79,17 +78,23 @@ try:
             # ast.literal_eval(user_data)
             # print(user_data)
         elif choice == 2:
-            search_name = input('Enter a name to search: ')
+            search_name = input('Enter a sender name to search: ')
             for index in range(0, redis_client.llen(sent_list_name)):
                 sent_dict = ast.literal_eval(redis_client.lindex(sent_list_name, index))
                 if search_name in sent_dict.keys():
                     print(sent_dict.values())
+                else:
+                    print('no such sender found!!!!!!!')
+                    break
         elif choice == 3:
-            name_search = input('Enter a name to search: ')
+            name_search = input('Enter a receiver name to search: ')
             for ind in range(0, redis_client.llen(recv_list_name)):
                 recv_dict = ast.literal_eval(redis_client.lindex(recv_list_name, ind))
                 if name_search in recv_dict.keys():
                     print(recv_dict.values())
+                else:
+                    print('no such receiver found!!!!!')
+                    break
         elif choice == 4:
             user_reg_data = {}
 
