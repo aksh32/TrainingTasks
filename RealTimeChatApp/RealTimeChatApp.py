@@ -25,64 +25,67 @@ global reg_user_name
 
 
 def chat_app():
-    ans = 'y'
-    global ip_address
-    global reg_user_name
-    user_reg_data = []
-    while ans.lower() == 'y':
-        print('\n--------select actions--------\n1. register user\n2. view history\n3. chat')
-        choice = int(input('Enter your choice: '))
-        if choice == 1:
-            user_name = input('Enter name: ')
-            ip_add = input('Enter Ip Address: ')
-            user_data = [user_name, ip_add]
-            for i in range(0, redis_client.llen(user_data_list)):
-                if ip_add in redis_client.lindex(user_data_list, i):
-                    print('ip address already registered with other name')
-                    break
-            else:
-                redis_client.lpush(user_data_list, str(user_data))
-                print('registered successfully!!!!!')
-        if choice == 2:
-            search_name = input('Enter a name to search: ')
-            for index in range(0, redis_client.llen(hist_list_name)):
-                sent_dict = ast.literal_eval(redis_client.lindex(hist_list_name, index))
-                for key, value in sent_dict.items():
-                    for ind in value:
-                        if search_name == ind:
-                            print(key, ' : ', value)
-        if choice == 3:
-            for i in range(0, redis_client.llen(user_data_list)):
-                user_reg_data.append(ast.literal_eval(redis_client.lindex(user_data_list, i)))
-
-            print('-----select a user-----')
-            for index in user_reg_data:
-                print(index[0])
-
-            # connect to user
-            u_name = input('Enter a user name: ')
-            for ind in user_reg_data:
-                if u_name in ind[0]:
-                    print('in for')
-                    print(ind)
-                    ip_address = ind[1]
-                    reg_user_name = ind[0]
-                    print(ip_address)
-                    break
+    try:
+        ans = 'y'
+        global ip_address
+        global reg_user_name
+        user_reg_data = []
+        while ans.lower() == 'y':
+            print('\n--------select actions--------\n1. register user\n2. view history\n3. chat')
+            choice = int(input('Enter your choice: '))
+            if choice == 1:
+                user_name = input('Enter name: ')
+                ip_add = input('Enter Ip Address: ')
+                user_data = [user_name, ip_add]
+                for i in range(0, redis_client.llen(user_data_list)):
+                    if ip_add in redis_client.lindex(user_data_list, i):
+                        print('ip address already registered with other name')
+                        break
                 else:
-                    print('no such user found, try to register first')
+                    redis_client.lpush(user_data_list, str(user_data))
+                    print('registered successfully!!!!!')
+            if choice == 2:
+                search_name = input('Enter a name to search: ')
+                for index in range(0, redis_client.llen(hist_list_name)):
+                    sent_dict = ast.literal_eval(redis_client.lindex(hist_list_name, index))
+                    for key, value in sent_dict.items():
+                        for ind in value:
+                            if search_name == ind:
+                                print(key, ' : ', value)
+            if choice == 3:
+                for i in range(0, redis_client.llen(user_data_list)):
+                    user_reg_data.append(ast.literal_eval(redis_client.lindex(user_data_list, i)))
 
-            # rec_thread = threading.Thread(target=receiving, args=(reg_user_name, soc_conn))
-            # send_thread = threading.Thread(target=sending, args=(hostname, soc_conn,))
-            _thread.start_new_thread(receiving,(reg_user_name, soc_conn))
-            sending(hostname, soc_conn)
-            # rec_thread.start()
-            # send_thread.start()
+                print('-----select a user-----')
+                for index in user_reg_data:
+                    print(index[0])
 
-            # rec_thread.join()
-            # send_thread.join()
-            # soc_conn.close()
-        ans = input('Do you want to continue?(y/n): ')
+                # connect to user
+                u_name = input('Enter a user name: ')
+                for ind in user_reg_data:
+                    if u_name in ind[0]:
+                        print('in for')
+                        print(ind)
+                        ip_address = ind[1]
+                        reg_user_name = ind[0]
+                        print(ip_address)
+                        break
+                    else:
+                        print('no such user found, try to register first')
+
+                # rec_thread = threading.Thread(target=receiving, args=(reg_user_name, soc_conn))
+                # send_thread = threading.Thread(target=sending, args=(hostname, soc_conn,))
+                _thread.start_new_thread(receiving,(reg_user_name, soc_conn))
+                sending(hostname, soc_conn)
+                # rec_thread.start()
+                # send_thread.start()
+
+                # rec_thread.join()
+                # send_thread.join()
+                # soc_conn.close()
+            ans = input('Do you want to continue?(y/n): ')
+    except KeyboardInterrupt:
+        chat_app()
 
 
 def receiving(name, sock):
