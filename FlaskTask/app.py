@@ -47,7 +47,7 @@ def upload_json_file():
             else:
                 flash('file extension not allowed')
                 response['message'] = 'file extension not allowed'
-    return jsonify(response)
+    return jsonify(results=response)
 
 
 def convert_to_csv(inputpath):

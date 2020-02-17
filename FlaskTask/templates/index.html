@@ -8,6 +8,7 @@
 {% block body %}
 <body>
     <center>
+        {{result}}
         <form action="http://0.0.0.0:5000/uploader" enctype="multipart/form-data" method="POST">
              <input type = "file" name = "file" />
              <input type = "submit"/>
