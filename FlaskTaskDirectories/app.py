@@ -1,7 +1,4 @@
-import collections
-import json
 import os
-from pprint import pprint
 
 from flask import Flask, render_template, request, jsonify
 from werkzeug.utils import secure_filename, redirect
@@ -12,16 +9,16 @@ app.secret_key = 'secret key'
 
 @app.route('/')
 def index():
-    return redirect('/searchDir')
+    directories = list_files('/home')
+    return render_template('/searchDir', direct=directories)
 
 
-@app.route('/searchDir', methods=['GET', 'POST'])
+@app.route('/searchDir', methods=['GET'])
 def search_directories():
-    search_dir = '/home/akshay/TrainingTasks'
+    search_dir = request.form.get('txt1')
     dir_info = list_files(search_dir)
-    pprint(dir_info)
-    print(os.path.isfile(search_dir))
-    return jsonify(dir_info)
+
+    return jsonify(directory_info=dir_info)
 
 
 def list_files(startpath):
