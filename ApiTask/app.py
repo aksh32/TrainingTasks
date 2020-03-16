@@ -24,9 +24,9 @@ def flatten_json(nested_json):
                             for ins_key, ins_val in val.items():
                                 if type(ins_val) is dict:
                                     for ins_new_key, ins_new_val in ins_val.items():
-                                        response_output['VT_' + key + '_' + k + '_' + ind + '_' + ins_key + '_' + ins_new_key] = ins_new_val
+                                        response_output['$VT' + key.capitalize() + str(k).capitalize() + str(ind).capitalize() + str(ins_key).capitalize() + str(ins_new_key).capitalize()] = ins_new_val
                                 else:
-                                    response_output['VT_' + key + '_' + k + '_' + ind + '_' + ins_key] = ins_val
+                                    response_output['$VT' + key.capitalize() + str(k).capitalize() + str(ind).capitalize() + str(ins_key).capitalize()] = ins_val
                                 # if type(ins_val) is list:
                                 #     for list_val in ins_val:
                                 #         response_output['VT_' + key + '_' + k + '_' + ind + '_' + ins_key + '_' + str(inc)] = list_val
@@ -36,9 +36,9 @@ def flatten_json(nested_json):
                         #         response_output['VT_' + key + '_' + k + '_' + ind + '_' + str(inc)] = list_val
                         #         inc += 1
                         else:
-                            response_output['VT_'+key+'_'+k+'_'+ind] = val
+                            response_output['$VT'+key.capitalize()+str(k).capitalize()+str(ind).capitalize()] = val
                 else:
-                    response_output['VT_'+key+'_'+k] = v
+                    response_output['$VT'+key.capitalize()+str(k).capitalize()] = v
         # elif type(value) is list:
         #     for ind in value:
         #         if type(ind) is dict:
@@ -70,13 +70,13 @@ def flatten_json(nested_json):
                     else:
                         final_dict[final_val[0]] = ''
                 for i, j in final_dict.items():
-                    response_output['VT_' + key + '_' + i] = j
+                    response_output['$VT' + key.capitalize() + str(i).capitalize()] = j
             else:
-                response_output['VT_' + key] = value
+                response_output['$VT' + key.capitalize()] = value
         elif type(value) is int:
-            response_output['VT_' + key] = value
+            response_output['$VT' + key.capitalize()] = value
         else:
-            response_output['VT_'+key] = value
+            response_output['$VT'+key.capitalize()] = value
     return response_output
 
 
@@ -84,94 +84,49 @@ def check_websites(site):
     params = {'apikey': API_KEY, 'resource': site}
     response = requests.get(CHECK_WEBSITE_API_URL, params=params)
     response_json = json.loads(response.content)
-    filtered_json = {}
-    malicious_found = []
-    not_malicious = []
-    filtered_json = {'$VTFileScanId': response_json['filescan_id'],
-                     '$VTPermaLink': response_json['permalink'],
-                     '$VTResource': response_json['resource'],
-                     '$VTScanDate': response_json['scan_date'],
-                     '$VTScanId': response_json['scan_id'],
-                     '$VTTotal': response_json['total'],
-                     '$VTUrl': response_json['url'],
-                     '$VTVerboseMsg': response_json['verbose_msg']}
-    for key,value in response_json['scans'].items():
-        print('in for')
-        for ins_key, ins_val in value.items():
-            print('ins_key: {} | ins_val: {}'.format(ins_key, ins_val))
-            filtered_json['$VTScanData'] = key
-            if ins_key == 'detected':
-                print('in if')
-                filtered_json['$VTDetected'] = ins_val
-            if ins_key == 'result':
-                print('in 2nd if')
-                filtered_json['$VTResult'] = ins_val
-    # for key, value in response_json['scans'].items():
-    #     data_list = [response_json['filescan_id'], response_json['positives'],
-    #                                         response_json['scan_id'], response_json['scan_date'],
-    #                                         response_json['response_code'], response_json['verbose_msg']]
-    #     filtered_json['$VT_ScanInfo'] = data_list
-    #     if value['detected']:
-    #         malicious_found.append([key, value['detected'], value['result']])
-    #     else:
-    #         not_malicious.append([key, value['detected'], value['result']])
-    #     filtered_json['$VT_NotMalicious'] = not_malicious
-    #     filtered_json['$VT_Malicious'] = malicious_found
+    with open('website_data.json','w') as file:
+        json.dump(response_json, file)
+    filtered_json=flatten_json(response_json)
     pp(filtered_json)
-    # pp(response_json)
 
 
 def check_file(file):
     params = {'apikey': API_KEY, 'resource': file}
     response = requests.get(CHECK_FILE_SCAN_API_URL, params=params)
     response_json = json.loads(response.content)
-    not_malicious = []
-    malicious_found = []
-    filtered_json = {}
-    for key, value in response_json['scans'].items():
-        # print(key, value)
-        data_list = [key, response_json['permalink'], response_json['resource'],
-                     response_json['positives'], response_json['scan_id'], response_json['verbose_msg']]
-        filtered_json['$VT_ScanInfo'] = data_list
-        if value['detected']:
-            malicious_found.append([key, value['detected'], value['result'], value['version']])
-        else:
-            not_malicious.append([key, value['detected'], value['result'], value['version']])
-        filtered_json['$VT_MaliciousUrlInfo']=malicious_found
-        filtered_json['$VT_FoundNotMalicious']=not_malicious
-    # pp(filtered_json)
-    flat_json = flatten_json(filtered_json)
+    flat_json = flatten_json(response_json)
     pp(flat_json)
-    # pp(response_json)
 
 
 def check_domain(domain):
     params = {'apikey': API_KEY, 'domain': domain}
     response = requests.get(CHECK_DOMAIN_API_URL, params=params)
     response_json = json.loads(response.content)
-    # pp(response.json())
-    filtered_json = {}
-    detected_urls = [[response_json['detected_urls'][i]['positives'], response_json['detected_urls'][i]['scan_date'],
-                      response_json['detected_urls'][i]['url']] for i in range(len(response_json['detected_urls']))]
-    # domain_info = [value for value in response_json['Webutation domain info'].values()]
-    # popularity_ranks = [val for key, value in response_json['popularity_ranks'].items() for val in value.values()]
-    dns_records = [[response_json['dns_records'][i]['ttl'], response_json['dns_records'][i]['type'],
-                    response_json['dns_records'][i]['value']] for i in range(len(response_json['dns_records']))]
-    dns_date = datetime.fromtimestamp(response_json['dns_records_date']).strftime('%Y-%m-%d %H:%M:%S')
-    # undetected_urls = [value for value in response_json['undetected_urls'] for i in range(len(value))]
-    whois_time = datetime.fromtimestamp(int(response_json['whois_timestamp'])).strftime('%Y-%m-%d %H:%M:%S')
-    filtered_json['$VT_Info'] = [response_json['subdomains'], dns_date, whois_time, response_json['whois_timestamp']]
-    filtered_json['$VT_DetectedUrls'] = detected_urls
-    filtered_json['$VT_DomainInfo'] = [value for value in response_json['Webutation domain info'].values()]
-    filtered_json['$VT_PopularityRank'] = [val for key, value in response_json['popularity_ranks'].items() for val in value.values()]
-    filtered_json['$VT_DnsRecords'] = dns_records
-    filtered_json['$VT_UndetectedUrls'] = [value for value in response_json['undetected_urls'] for i in range(len(value))]
-    # pp(response_json['whois'])
-    # pp(response_json)
-    flat_json = flatten_json(response_json)
-    pp(flat_json)
-    # pp(whois)
+    pp(response_json)
+    flat_json = {}
+    # final_json = []
+    # for keys, values in response_json.items():
+    #     temp_json = {}
+    #     if type(values) is not str:
+    #         print('not str')
+    #         # if type(values) is list:
+    #         #     print('\tlist')
+    #         #     for ind in values:
+    #         #         if type(ind) is dict:
+    #         #             print('\t\tnot list')
+    #         #             for k, v in ind.items():
+    #         #                 print('\t\t\t', k, ' : ', v)
+    #         #         else:
+    #         #             print('\t\t',type(ind))
+    #         # else:
+    #         #     print('\tnot list')
+    #         #     print('\t\t', type(values))
+    #     else:
+    #         # temp_json[keys] = values
+    #         final_json.append({keys: values})
 
+    # pp(flat_json)
+    # pp(final_json)
 
 def check_ip_address(ip_address):
     params = {'apikey': API_KEY, 'ip': ip_address}
@@ -210,9 +165,9 @@ def check_ip_address(ip_address):
 
 # check_websites('http://www.dailystudy.org/')
 # time.sleep(15)
-check_websites('https://www.truecaller.com/')
+# check_websites('https://www.truecaller.com/')
 # time.sleep(15)
 # check_file('9498FF82A64FF445398C8426ED63EA5B')
 # time.sleep(15)
-# check_domain('textspeier.de')
+check_domain('textspeier.de')
 # check_ip_address('114.104.158.172')
