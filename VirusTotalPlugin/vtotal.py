@@ -6,9 +6,10 @@ from pprint import pprint
 import requests
 
 
-path = os.environ["WORKDIR"]
-with open(path + "/lookup_plugins/virustotal1/dnifconfig.yml", 'r') as ymlfile:
-    cfg = yaml.load(ymlfile)
+# path = os.environ["WORKDIR"]
+# with open(path + "/lookup_plugins/virustotal1/dnifconfig.yml", 'r') as ymlfile:
+with open("dnifconfig.yml", 'r') as ymlfile:
+    cfg = yaml.safe_load(ymlfile)
 
 
 def flatten_json(json_data):
@@ -71,7 +72,7 @@ def get_url_report(inward_array, var_array):
                 encoded_url = base64.b64encode(i[var_array[0]].encode())
                 res = requests.get(check_url_api + '/' + encoded_url.decode().replace('=', ''), headers=headers)
                 url_data = json.loads(res.content)
-                flat_data = flatten_json(url_data)
+                flat_data = flatten_json(url_data['data'])
             except Exception as e:
                 print('Error: {}'.format(e))
             try:
@@ -120,19 +121,38 @@ def get_ip_report(inward_array, var_array):
     return inward_array
 
 
+def get_file_report(inward_array, var_array):
+    check_file_api = 'https://www.virustotal.com/api/v3/files'
+    flat_data = {}
+    for i in inward_array:
+        if var_array[0] in i:
+            try:
+                response = requests.get(check_file_api + '/' + i[var_array[0]], headers=headers)
+                file_data = json.loads(response.content)
+                flat_data = flatten_json(file_data['data'])
+            except Exception as e:
+                print('Error: {}'.format(e))
+            try:
+                for key, value in flat_data.items():
+                    i[key] = value
+            except Exception:
+                pass
+    return inward_array
+
+
 # url_in_array = [{'$SrcUrl': 'https://www.truecaller.com/'}, {'$SrcUrl': 'http://www.dailystudy.org/'}]
 # url_v_array = ['$SrcUrl']
 #
 # domain_in_array = [{'$SrcDomain': 'textspeier.de'}, {'$SrcDomain': 'photoscape.ch/Setup.exe'}]
 # domain_v_array = ['$SrcDomain']
 #
-# ip_in_array = [{'$SrcIp': '114.104.158.172'}, {'$SrcIp': '201.18.18.173'}]
-# ip_v_array = ['$SrcIp']
+ip_in_array = [{'$SrcIp': '114.104.158.172'}, {'$SrcIp': '201.18.18.173'}]
+ip_v_array = ['$SrcIp']
 
 
 # pprint(get_url_report(url_in_array, url_v_array))
 # print('\n*******************************************************************************\n')
 # pprint(get_domain_report(domain_in_array, domain_v_array))
 # print('\n*******************************************************************************\n')
-# pprint(get_ip_report(ip_in_array, ip_v_array))
+pprint(get_ip_report(ip_in_array, ip_v_array))
 
